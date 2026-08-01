@@ -2,6 +2,7 @@
 
 #include "esphome/core/component.h"
 #include "esphome/components/ble_client/ble_client.h"
+#include "esphome/components/esp32_ble_tracker/esp32_ble_tracker.h"
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/components/binary_sensor/binary_sensor.h"
 
@@ -9,6 +10,8 @@
 
 namespace esphome {
 namespace p180 {
+
+namespace espbt = esphome::esp32_ble_tracker;
 
 // BrightEMS / SYD-power BLE service & characteristics
 // Documented in Ylianst/ESP-FBot's internals/README.md (AFERIY P310 teardown).
@@ -61,6 +64,8 @@ class P180Component : public esphome::ble_client::BLEClientNode, public Componen
   bool service_ready_{false};
   uint16_t write_handle_{0};
   uint16_t notify_handle_{0};
+  esp_bd_addr_t remote_bda_{};  // captured from ESP_GATTC_OPEN_EVT - parent's copy is protected
+  uint16_t conn_id_{0};         // captured from ESP_GATTC_OPEN_EVT - parent's copy is protected
 
   sensor::Sensor *ac_in_voltage_sensor_{nullptr};
   sensor::Sensor *ac_in_frequency_sensor_{nullptr};
