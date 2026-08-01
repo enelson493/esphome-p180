@@ -1,6 +1,3 @@
-# esphome-p180
-Code for using ESPHome BLE to connect to an Afeiry P180 battery for monitoring.
-
 # P180 ESPHome Component (custom, monitoring-focused)
 
 Implements the BrightEMS Modbus-over-BLE protocol documented in
@@ -20,7 +17,7 @@ power, once running on battery — and diffing which registers changed:
 | 12 | 250 | 256 | Output power (W) |
 | 13 | 0   | 256 | Battery discharge power (W) |
 | 31 | 90  | 90  | Battery % (raw value = %, no scaling) |
-| 75 | 144 | 144 | Remaining time (minutes) |
+| 75 | 144 | 144 | ~~Remaining time~~ — turned out to be static, not live data (see below) |
 
 Registers 36/37 (constant `0x3000`/`0x4000` in both captures), 72, 90, and
 97–99 (likely firmware/hardware version info) also appeared but their
@@ -28,6 +25,16 @@ meaning wasn't needed for outage monitoring, so they're not wired up.
 Output on/off state (USB/DC/AC/light) isn't included since the candidate
 status register never changed in testing — add it later if you want it,
 by capturing dumps with those outputs toggled and diffing the same way.
+
+**Remaining time is computed, not read from a register.** Register 75
+looked plausible at first (144 matched a rough runtime estimate) but
+stayed fixed across multiple real captures while the AFERIY app's own
+number changed — meaning it isn't live data on this device. The component
+instead computes it the same way the app almost certainly does:
+`(battery% / 100 × capacity_wh) / discharge_power_w × 60` minutes. Battery
+capacity is configurable — see the `number:` entity in the example config
+below, which lets you bump it later (e.g. after adding an expansion
+battery) without reflashing.
 
 **This has not been compiled and flashed yet.** The protocol and register
 values above are verified against real captured data, but ESPHome's
@@ -82,6 +89,26 @@ p180:
   id: p180_main
   ble_client_id: p180_ble
   polling_interval: 5s
+  battery_capacity_wh: 1024   # compiled-in starting value
+
+# Adjustable at runtime from Home Assistant (e.g. after adding an expansion
+# battery) without reflashing - persists across reboots via restore_value.
+number:
+  - platform: template
+    name: "Battery Capacity"
+    id: battery_capacity_wh
+    icon: mdi:battery-high
+    unit_of_measurement: "Wh"
+    min_value: 512
+    max_value: 8192
+    step: 1
+    initial_value: 1024
+    optimistic: true
+    restore_value: true
+    on_value:
+      then:
+        - lambda: |-
+            id(p180_main).set_battery_capacity_wh(x);
 
 sensor:
   - platform: p180
