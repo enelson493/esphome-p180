@@ -1,6 +1,7 @@
 #include "p180.h"
 #include "esphome/core/log.h"
 #include <cstring>
+#include <cmath>
 
 namespace esphome {
 namespace p180 {
@@ -181,8 +182,23 @@ void P180Component::parse_status_response_(const uint8_t *data, uint16_t len) {
     this->battery_discharge_power_sensor_->publish_state(reg(13));
   if (this->battery_percent_sensor_ != nullptr)
     this->battery_percent_sensor_->publish_state(reg(31));  // raw value IS the percent, no scaling
-  if (this->remaining_time_sensor_ != nullptr)
-    this->remaining_time_sensor_->publish_state(reg(75));
+
+  // "Remaining time" isn't transmitted as a raw register on this device (confirmed:
+  // reg 75 stayed fixed at 144 across multiple real captures while the app's own
+  // estimate moved). The app almost certainly computes it client-side the same way
+  // we do here: (battery energy remaining) / (current discharge rate).
+  if (this->remaining_time_sensor_ != nullptr) {
+    float discharge_w = reg(13);
+    if (discharge_w > 0.0f) {
+      float battery_pct = reg(31);
+      float minutes = (battery_pct / 100.0f * this->battery_capacity_wh_) / discharge_w * 60.0f;
+      this->remaining_time_sensor_->publish_state(minutes);
+    } else {
+      // Not discharging (on AC passthrough, or idle) - "remaining time on battery"
+      // isn't a meaningful number right now.
+      this->remaining_time_sensor_->publish_state(NAN);
+    }
+  }
 
   if (this->connected_binary_sensor_ != nullptr)
     this->connected_binary_sensor_->publish_state(true);
