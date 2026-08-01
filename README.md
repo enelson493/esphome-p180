@@ -31,10 +31,21 @@ looked plausible at first (144 matched a rough runtime estimate) but
 stayed fixed across multiple real captures while the AFERIY app's own
 number changed — meaning it isn't live data on this device. The component
 instead computes it the same way the app almost certainly does:
-`(battery% / 100 × capacity_wh) / discharge_power_w × 60` minutes. Battery
-capacity is configurable — see the `number:` entity in the example config
-below, which lets you bump it later (e.g. after adding an expansion
-battery) without reflashing.
+`(battery% / 100 × capacity_wh × efficiency) / discharge_power_w × 60`
+minutes.
+
+The `efficiency` factor exists because a naive calc without it runs
+noticeably optimistic versus the app (observed: 198 min calculated vs.
+168 min shown in-app, a ~15% gap). Registers 12 (output power) and 13
+(battery discharge power) read *identical* values in testing, which
+suggests reg 13 may actually be reporting AC-side output power rather
+than true DC-side battery draw — missing inverter conversion losses and
+the unit's own standby draw (fans, display, control board). Rather than
+chase that further through more hex-dump reverse engineering, `efficiency`
+is a single lumped correction factor you can tune against the app over
+time (default 0.85, matching the observed ratio). Both `capacity_wh` and
+`efficiency` are live-adjustable via the `number:` entities below, no
+reflash needed to recalibrate.
 
 **This has not been compiled and flashed yet.** The protocol and register
 values above are verified against real captured data, but ESPHome's
@@ -89,10 +100,12 @@ p180:
   id: p180_main
   ble_client_id: p180_ble
   polling_interval: 5s
-  battery_capacity_wh: 1024   # compiled-in starting value
+  battery_capacity_wh: 1024      # compiled-in starting value
+  battery_efficiency: 0.85       # compiled-in starting value - tune against the app
 
 # Adjustable at runtime from Home Assistant (e.g. after adding an expansion
-# battery) without reflashing - persists across reboots via restore_value.
+# battery, or after calibrating against the AFERIY app's own estimate) without
+# reflashing - persists across reboots via restore_value.
 number:
   - platform: template
     name: "Battery Capacity"
@@ -109,6 +122,22 @@ number:
       then:
         - lambda: |-
             id(p180_main).set_battery_capacity_wh(x);
+
+  - platform: template
+    name: "Battery Runtime Efficiency"
+    id: battery_efficiency
+    icon: mdi:lightning-bolt
+    unit_of_measurement: "%"
+    min_value: 50
+    max_value: 100
+    step: 1
+    initial_value: 85
+    optimistic: true
+    restore_value: true
+    on_value:
+      then:
+        - lambda: |-
+            id(p180_main).set_battery_efficiency(x / 100.0f);
 
 sensor:
   - platform: p180
