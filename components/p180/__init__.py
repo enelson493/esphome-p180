@@ -12,12 +12,14 @@ p180_ns = cg.esphome_ns.namespace("p180")
 P180Component = p180_ns.class_("P180Component", cg.Component, ble_client.BLEClientNode)
 
 CONF_POLLING_INTERVAL = "polling_interval"
+CONF_BATTERY_CAPACITY_WH = "battery_capacity_wh"
 
 CONFIG_SCHEMA = (
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(P180Component),
             cv.Optional(CONF_POLLING_INTERVAL, default="5s"): cv.positive_time_period_milliseconds,
+            cv.Optional(CONF_BATTERY_CAPACITY_WH, default=1024.0): cv.float_range(min=1.0),
         }
     )
     .extend(cv.COMPONENT_SCHEMA)
@@ -30,3 +32,4 @@ async def to_code(config):
     await cg.register_component(var, config)
     await ble_client.register_ble_node(var, config)
     cg.add(var.set_polling_interval(config[CONF_POLLING_INTERVAL]))
+    cg.add(var.set_battery_capacity_wh(config[CONF_BATTERY_CAPACITY_WH]))
