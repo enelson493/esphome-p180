@@ -51,6 +51,12 @@ class P180Component : public esphome::ble_client::BLEClientNode, public Componen
   // without reflashing. See the README/example YAML for the number: block.
   void set_battery_capacity_wh(float wh) { this->battery_capacity_wh_ = wh; }
 
+  // Lumped derate factor (0-1) covering inverter conversion loss, standby draw,
+  // and any non-linearity in the battery-% reading - whatever gap exists between
+  // our naive calc and the AFERIY app's own estimate. Same live-adjustable
+  // pattern as capacity; start around 0.85 and tune against the app over time.
+  void set_battery_efficiency(float eff) { this->battery_efficiency_ = eff; }
+
   // Binary sensors
   void set_connected_binary_sensor(binary_sensor::BinarySensor *s) { this->connected_binary_sensor_ = s; }
   // Derived: is grid/AC power actually present at the input (the outage sensor) -
@@ -82,6 +88,7 @@ class P180Component : public esphome::ble_client::BLEClientNode, public Componen
   sensor::Sensor *battery_percent_sensor_{nullptr};
   sensor::Sensor *remaining_time_sensor_{nullptr};
   float battery_capacity_wh_{1024.0f};
+  float battery_efficiency_{0.85f};
 
   binary_sensor::BinarySensor *connected_binary_sensor_{nullptr};
   binary_sensor::BinarySensor *grid_power_binary_sensor_{nullptr};
