@@ -43,7 +43,13 @@ class P180Component : public esphome::ble_client::BLEClientNode, public Componen
   void set_output_power_sensor(sensor::Sensor *s) { this->output_power_sensor_ = s; }         // reg 12
   void set_battery_discharge_power_sensor(sensor::Sensor *s) { this->battery_discharge_power_sensor_ = s; } // reg 13
   void set_battery_percent_sensor(sensor::Sensor *s) { this->battery_percent_sensor_ = s; }   // reg 31 (raw = %, no scaling)
-  void set_remaining_time_sensor(sensor::Sensor *s) { this->remaining_time_sensor_ = s; }     // reg 75
+  void set_remaining_time_sensor(sensor::Sensor *s) { this->remaining_time_sensor_ = s; }     // computed, not a raw register
+
+  // Battery capacity in Wh, used to compute remaining_time. Has a compiled-in
+  // default (set via YAML) but is meant to be overridden live from a `number`
+  // entity so it can be bumped later (e.g. after adding an expansion battery)
+  // without reflashing. See the README/example YAML for the number: block.
+  void set_battery_capacity_wh(float wh) { this->battery_capacity_wh_ = wh; }
 
   // Binary sensors
   void set_connected_binary_sensor(binary_sensor::BinarySensor *s) { this->connected_binary_sensor_ = s; }
@@ -75,6 +81,7 @@ class P180Component : public esphome::ble_client::BLEClientNode, public Componen
   sensor::Sensor *battery_discharge_power_sensor_{nullptr};
   sensor::Sensor *battery_percent_sensor_{nullptr};
   sensor::Sensor *remaining_time_sensor_{nullptr};
+  float battery_capacity_wh_{1024.0f};
 
   binary_sensor::BinarySensor *connected_binary_sensor_{nullptr};
   binary_sensor::BinarySensor *grid_power_binary_sensor_{nullptr};
