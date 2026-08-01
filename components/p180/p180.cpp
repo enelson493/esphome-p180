@@ -191,7 +191,8 @@ void P180Component::parse_status_response_(const uint8_t *data, uint16_t len) {
     float discharge_w = reg(13);
     if (discharge_w > 0.0f) {
       float battery_pct = reg(31);
-      float minutes = (battery_pct / 100.0f * this->battery_capacity_wh_) / discharge_w * 60.0f;
+      float minutes = (battery_pct / 100.0f * this->battery_capacity_wh_ * this->battery_efficiency_) /
+                       discharge_w * 60.0f;
       this->remaining_time_sensor_->publish_state(minutes);
     } else {
       // Not discharging (on AC passthrough, or idle) - "remaining time on battery"
