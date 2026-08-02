@@ -47,18 +47,11 @@ time (default 0.85, matching the observed ratio). Both `capacity_wh` and
 `efficiency` are live-adjustable via the `number:` entities below, no
 reflash needed to recalibrate.
 
-**This has not been compiled and flashed yet.** The protocol and register
-values above are verified against real captured data, but ESPHome's
-internal C++ API (exact enum/method names) can vary slightly by version,
-so a first compile may need small fixes. If it doesn't compile, paste me
-the error and we'll sort it out together.
 
 ## Installation
 
-1. Copy the `p180/` folder into your ESPHome config directory, e.g.
-   `<config>/esphome/components/p180/`
-2. Reference it as a local external component (see example below)
-3. Get your battery's BLE MAC address (search for a device starting with
+1. Reference this as an external component (see example below)
+2. Get your battery's BLE MAC address (search for a device starting with
    "FOSSIBOT" or "POWER" using a BLE scanner app or nRF Connect)
 
 ## Example configuration
