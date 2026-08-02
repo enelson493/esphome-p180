@@ -88,9 +88,11 @@ logger:
 
 external_components:
   - source:
-      type: local
-      path: components   # folder containing p180/, relative to this yaml
+      type: git
+      url: https://github.com/enelson493/esphome-p180
+      ref: main
     components: [p180]
+    refresh: 0s   # while iterating - forces a fresh pull every compile
 
 ble_client:
   - mac_address: "AA:BB:CC:DD:EE:FF"   # your P180's BLE MAC
