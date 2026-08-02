@@ -114,9 +114,9 @@ number:
     id: battery_capacity_wh
     icon: mdi:battery-high
     unit_of_measurement: "Wh"
-    min_value: 512
-    max_value: 8192
-    step: 1
+    min_value: 1024
+    max_value: 5120
+    step: 1024
     initial_value: 1024
     optimistic: true
     restore_value: true
