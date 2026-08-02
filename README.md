@@ -17,7 +17,7 @@ power, once running on battery — and diffing which registers changed:
 | 12 | 250 | 256 | Output power (W) |
 | 13 | 0   | 256 | Battery discharge power (W) |
 | 31 | 90  | 90  | Battery % (raw value = %, no scaling) |
-| 75 | 144 | 144 | ~~Remaining time~~ — turned out to be static, not live data (see below) |
+
 
 Registers 36/37 (constant `0x3000`/`0x4000` in both captures), 72, 90, and
 97–99 (likely firmware/hardware version info) also appeared but their
